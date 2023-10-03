@@ -12,6 +12,34 @@ from cloudvolume.lib import mkdir, touch
 
 from temu.funs import get_pairs,get_good_pairs,get_preview_region
 
+
+def convert_to_tif(source, destination, parallel):
+    tile_path = os.path.join(source, "subtiles")
+    target_path = os.path.join(destination, source.split("/")[-1])
+    
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
+
+    progress_dir = os.path.join(target_path, 'progress_tif')
+    if not os.path.exists(progress_dir):
+        os.makedirs(progress_dir)
+
+    done_files = set(os.listdir(progress_dir))
+    all_files = set([fname for fname in os.listdir(tile_path) if os.path.splitext(fname)[1] == ".bmp"])
+    to_cv = list(all_files.difference(done_files))
+    to_cv.sort()
+
+    def process(filename):
+        img = cv2.imread(os.path.join(tile_path, filename), cv2.IMREAD_GRAYSCALE)
+        cv2.imwrite(os.path.join(target_path, filename.replace("bmp", "tif")), img)
+        return 1
+
+    with tqdm(desc="Convert", total=len(all_files), initial=len(done_files)) as pbar:
+        with pathos.pools.ProcessPool(parallel) as pool:
+            for num_inserted in pool.imap(process, to_cv):
+                pbar.update(num_inserted)
+
+
 @click.group()
 @click.option("-p", "--parallel", default=1, help="Run with this number of parallel processes. If 0, use number of cores.")
 @click.pass_context
@@ -29,37 +57,10 @@ def main(ctx, parallel):
 @click.argument("destination")
 @click.pass_context
 def totif(ctx, source, destination):
-    tile_path = os.path.join(source,"subtiles")
-
-    target_path = os.path.join(destination, source.split("/")[-1])
-    if not os.path.exists(target_path):
-        os.makedirs(target_path)
-
-    progress_dir = mkdir(os.path.join(target_path, 'progress_tif'))
-    done_files = set(os.listdir(progress_dir))
-    all_files = os.listdir(tile_path)
-
-    all_files = set([
-            fname for fname in all_files
-            if os.path.splitext(fname)[1] == ".bmp"
-        ])
-
-    to_cv = list(all_files.difference(done_files))
-    to_cv.sort()
-
-    def process(filename):
-        img = cv2.imread(os.path.join(tile_path,filename),cv2.IMREAD_GRAYSCALE)
-        cv2.imwrite(os.path.join(target_path, filename.replace("bmp","tif")), img)
-        return 1
-
     parallel = int(ctx.obj.get("parallel", 1))
+    convert_to_tif(source, destination, parallel)
 
-    with tqdm(desc="Convert", total=len(all_files), initial=len(done_files)) as pbar:
-        with pathos.pools.ProcessPool(parallel) as pool:
-            for num_inserted in pool.imap(process, to_cv):
-                pbar.update(num_inserted)
-
-
+    
 @main.command()
 @click.argument("source")
 @click.argument("destination")
