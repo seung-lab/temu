@@ -22,7 +22,7 @@ def get_pair_list(subt):
             pair_list.append(" ".join(tile_pair) + " " + "-".join(tile_pair))
     return pair_list
 
-def get_pair_list_pix(subt):
+def get_pair_list_pix(subt, overlap):
     pair_list = []
     for xi in pd.unique(subt.xis):
         xt = subt.query("xis==@xi")
@@ -30,8 +30,7 @@ def get_pair_list_pix(subt):
         for pair in cl:
             t1 = xt.query("yis in @pair").copy()
             tile_pair = t1.sort_values(by ="yis")["fname"].tolist()
-            pair_list.append(tile_pair[0] + " 0 5999 4800 5999 " + tile_pair[1] + " 0 5999 0 1200 " +
-                             "-".join(tile_pair))
+            pair_list.append(f"{tile_pair[0]} 0 5999 4800 5999 {tile_pair[1]} 0 5999 0 {overlap} {'-'.join(tile_pair)}")
 
     for yi in pd.unique(subt.yis):
         yt = subt.query("yis==@yi")
@@ -39,8 +38,7 @@ def get_pair_list_pix(subt):
         for pair in cl:
             t1 = yt.query("xis in @pair").copy()
             tile_pair = t1.sort_values(by ="xis")["fname"].tolist()
-            pair_list.append(tile_pair[0] + " 4800 5999 0 5999 " + tile_pair[1] + " 0 1200 0 5999 " +
-                             "-".join(tile_pair))
+            pair_list.append(f"{tile_pair[0]} 4800 5999 0 5999 {tile_pair[1]} 0 {overlap} 0 5999 {'-'.join(tile_pair)}")
     return pair_list
 
 def get_subtile_loc(pos_path, tile_path, stage_step=44395):
@@ -105,7 +103,7 @@ def get_preview_region(path="/mnt/sink/scratch/zhihaozheng/ca3/tape3_blade2_maps
     return '{}x{}-{}-{}'.format(wid,hei,x1,y1)
 
 
-def get_good_pairs(acq_label,summary_f,tile_path,pos_path,save_path,exclude=[],fname="core",corr_threshold=0.85,threshold=0.75,stage_step=44395):
+def get_good_pairs(acq_label,summary_f,tile_path,pos_path,save_path,exclude=[],fname="core",corr_threshold=0.85,threshold=0.75,stage_step=44395, overlap=1200):
     '''
     # 220421 get_good_pairs change to picking high corr ones from summary_f
     acq_label: label for the section that will be attached to the pair list name
@@ -144,7 +142,7 @@ def get_good_pairs(acq_label,summary_f,tile_path,pos_path,save_path,exclude=[],f
 
     # pos_path = os.path.join(data_path,acq_name,"metadata","stage_positions.csv")
     subt = get_subtile_loc(pos_path, tile_path, stage_step)
-    pair_list = get_pair_list_pix(subt)
+    pair_list = get_pair_list_pix(subt, overlap)
     for pair in pair_list:
         ps_list = [pair.split(" ")[0],pair.split(" ")[5]]
         ps = set(ps_list)
@@ -180,7 +178,7 @@ def get_good_pairs(acq_label,summary_f,tile_path,pos_path,save_path,exclude=[],f
         f.write("\n".join(core_images))
     print("pairs_images_lst saved for " + acq_label)
 
-def get_pairs(acq_label,tile_path,pos_path,save_path,stage_step):
+def get_pairs(acq_label,tile_path,pos_path,save_path,stage_step,overlap=1200):
     '''
     acq_label: label for the section that will be attached to the pair list name
     tile_path: path to the tiles that will be stitched
@@ -188,7 +186,7 @@ def get_pairs(acq_label,tile_path,pos_path,save_path,stage_step):
     save_path: path to where the pair_list and image_list will save to
     '''
     subt = get_subtile_loc(pos_path, tile_path, stage_step)
-    pair_list = get_pair_list_pix(subt)
+    pair_list = get_pair_list_pix(subt, overlap)
 
     with open(os.path.join(save_path,acq_label + "_pairs.lst"),"w") as f:
         f.write("\n".join(pair_list))
