@@ -168,7 +168,8 @@ def previewbatch(acqs, output, tile_path, map_path):
 @click.option('--corr_threshold', default=0, type=float)
 @click.option('--threshold', default=0.75, type=float)
 @click.option("--stage_step",default=44395,type=int)
-def getgoodpairs(acq, tile_path, pos_path, save_path, exclude, corr_threshold, threshold, stage_step):
+@click.option("--overlap", default=1200, type=int)
+def getgoodpairs(acq, tile_path, pos_path, save_path, exclude, corr_threshold, threshold, stage_step, overlap):
     '''
     acq_path: e.g. /media/voxa/WD_23/zhihao/ca3/tape3_blade2/211222/bladeseq-2021.12.24-14.55.36/s108-2021.12.24-14.55.36
     tile_path: e.g. /media/voxa/WD_36/zhihao/ca3/tape3_blade2_tif/s108-2021.12.24-14.55.36
@@ -196,7 +197,7 @@ def getgoodpairs(acq, tile_path, pos_path, save_path, exclude, corr_threshold, t
         with open(exclude,"r") as f:
             exclude=f.read().splitlines()
 
-    get_good_pairs(acq,summary_f,tile_path,pos_path,lst_save_path,exclude,fname="core",corr_threshold=corr_threshold,threshold=threshold,stage_step=stage_step)
+    get_good_pairs(acq,summary_f,tile_path,pos_path,lst_save_path,exclude,fname="core",corr_threshold=corr_threshold,threshold=threshold,stage_step=stage_step,overlap=overlap)
 
 @main.command()
 @click.option('--acqs', default="", required=True)
@@ -206,7 +207,8 @@ def getgoodpairs(acq, tile_path, pos_path, save_path, exclude, corr_threshold, t
 @click.option('--tile_path', default="/mnt/sink/scratch/zhihaozheng/ca3/tif/tape3_blade2", type=str)
 @click.option('--pos_path', default="/mnt/sink/scratch/zhihaozheng/ca3/stage_positions/tape3_blade2",type=str)
 @click.option("--stage_step",default=44395,type=int)
-def getgoodpairsbatch(acqs, map_path, threshold, corr_threshold, tile_path, pos_path, stage_step):
+@click.option("--overlap", default=1200, type=int)
+def getgoodpairsbatch(acqs, map_path, threshold, corr_threshold, tile_path, pos_path, stage_step, overlap):
     """
     acqs: /home/voxa/scripts/stitch/stitching/220409_stitch_full_section/tk_scripts/s56_acqs.lst
     """
@@ -223,7 +225,7 @@ def getgoodpairsbatch(acqs, map_path, threshold, corr_threshold, tile_path, pos_
         summary_f=os.path.join(map_path,"maps",acq_label,"summary.out")
         p_path = pos_path + "/" + acq + "_stage_positions.csv"
         tpath = tile_path + "/" + acq
-        get_good_pairs(acq_label,summary_f,tpath,p_path,lst_save_path,exclude=[],fname="core",corr_threshold=corr_threshold,threshold=threshold,stage_step=stage_step)
+        get_good_pairs(acq_label,summary_f,tpath,p_path,lst_save_path,exclude=[],fname="core",corr_threshold=corr_threshold,threshold=threshold,stage_step=stage_step,overlap=overlap)
 
 
 
